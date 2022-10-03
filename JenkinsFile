@@ -1,0 +1,31 @@
+pipeline {
+agent any
+stages {
+stage("Git checkout"){
+steps {
+git credentialsId: 'git-cred', url: 'https://github.com/raghumugali/SpringBoot-Rest-Swagger-App.git'
+}
+}
+stage("Maven Build"){
+steps{
+sh "mvn clean package"
+sh"mv targer/*.war target/myweb.war"
+}
+}
+stage("deploy-dev"){
+steps{
+sshagent(['jenkins-springboot-cred']) {
+
+  sh """
+  scp -o StrictHostKeyChecking=no target/myweb.war ubuntu@172.31.10.161:/home/ubuntu/apache-tomcat-9.0.67
+  
+  ssh ubuntu@172.31.10.161 /home/ubuntu/apache-tomcat-9.0.67/bin/shutdown.sh
+  
+  ssh ubuntu@172.31.10.161 /home/ubuntu/apache-tomcat-9.0.67/bin/startup.sh
+  
+  """
+}
+}
+}
+}
+}
